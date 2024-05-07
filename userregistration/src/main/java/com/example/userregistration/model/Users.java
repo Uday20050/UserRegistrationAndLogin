@@ -25,16 +25,19 @@ public class Users {
     private String confirmPassword;
     
     private String resetToken;
+    
+    private String roles;
 	
 	public Users() {}
 	
-	public Users(String firstName, String lastName, String emailId, String password, String address) {
+	public Users(String firstName, String lastName, String emailId, String password, String address, String role) {
 		super();
 		this.firstName = firstName;
 		this.lastName = lastName;
 		this.emailId = emailId;
 		this.password = password;
 		this.address = address;
+		this.setRoles(roles);
 	}
 	public String getFirstName() {
 		return firstName;
@@ -81,5 +84,13 @@ public class Users {
 	public void setConfirmPassword(String confirmPassword) {
 	     this.confirmPassword = confirmPassword;
 	 }
+
+	public String getRoles() {
+		return roles;
+	}
+
+	public void setRoles(String roles) {
+		this.roles = roles;
+	}
     
 }

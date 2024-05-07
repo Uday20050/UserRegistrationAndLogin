@@ -3,17 +3,17 @@ package com.example.userregistration.controller;
 import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
-import org.springframework.mail.SimpleMailMessage;
-import org.springframework.mail.javamail.JavaMailSender;
-
 import com.example.userregistration.model.Users;
 import com.example.userregistration.repository.UserJpaRepository;
+import com.example.userregistration.service.EmailService;
 
 import jakarta.servlet.http.HttpServletRequest;
+//import jakarta.servlet.http.HttpSession;
 
 @Controller
 public class RegistrationController {
@@ -22,11 +22,15 @@ public class RegistrationController {
     private UserJpaRepository userService;
     
     @Autowired
-    private JavaMailSender mailSender;
+    private EmailService emailService;
+    
+    @Autowired
+    private PasswordEncoder passwordEncoder;
     
     @GetMapping("/")
     public String showHomePage() {
-        return "home"; // Return the view name for home page
+    	
+        return "home"; 
     }
 
     @GetMapping("/register")
@@ -42,7 +46,8 @@ public class RegistrationController {
             model.addAttribute("error", "User with this email already exists!");
             return "register"; // Return back to the registration form with error message
         }
-
+        String encodedPassword = passwordEncoder.encode(user.getPassword());
+        user.setPassword(encodedPassword);
         // If email doesn't exist, save the user
         userService.save(user);
         return "redirect:/register?success"; // Redirect to the register page with a success parameter
@@ -51,20 +56,20 @@ public class RegistrationController {
     
     @GetMapping("/login")
     public String showLoginForm(Model model) {
-        model.addAttribute("user", new Users());
         return "login"; // Return the view name for login form
     }
 
-    @PostMapping("/login")
+    /*@PostMapping("/login")
     public String loginUser(@ModelAttribute("user") Users user, Model model) {
         Users existingUser = userService.findByEmailId(user.getEmailId());
         if (existingUser != null && existingUser.getPassword().equals(user.getPassword())) {
-            return "redirect:/login?success"; // Redirect to the login page after successful login
+            //return "redirect:/login?success"; // Redirect to the login page after successful login
+        	return "login-success";
         } else {
             model.addAttribute("error", "Invalid email or password");
             return "login"; // Return back to the login form with error message
         }
-    }
+    }*/
     @GetMapping("/forgot-password")
     public String showForgotPasswordForm() {
         return "forgot-password";
@@ -79,10 +84,10 @@ public class RegistrationController {
             // Save the token in the database for the user
             user.setResetToken(token);
             userService.save(user);
-            // Construct the reset password link
+            // Constructing the reset password link
             String resetLink = request.getScheme() + "://" + request.getServerName() + ":" + request.getServerPort() + "/reset-password?token=" + token;
             // Send an email with the reset link
-            sendResetPasswordEmail(email, resetLink);
+            emailService.sendResetPasswordEmail(email, resetLink);
             return "forgot-password-success";
         } else {
             return "forgot-password-error";
@@ -123,13 +128,6 @@ public class RegistrationController {
             return "reset-password-error";
         }
     }
-
-
-    private void sendResetPasswordEmail(String email, String resetLink) {
-        SimpleMailMessage message = new SimpleMailMessage();
-        message.setTo(email);
-        message.setSubject("Reset Your Password");
-        message.setText("To reset your password, please click the link below:\n\n" + resetLink);
-        mailSender.send(message);
-    }
+    
+ 
 }
